@@ -1,4 +1,5 @@
 --edited from this: https://github.com/AlternateYT/Roblox-Scripts/blob/main/Serverhop%20Module.lua
+--chatgpt is the pog
 --makes it so it actively searches for lowest playercount
 
 local AllIDs = {}
