@@ -1,7 +1,6 @@
 --edited from this: https://github.com/AlternateYT/Roblox-Scripts/blob/main/Serverhop%20Module.lua
 --chatgpt is the pog
 --makes it so it actively searches for lowest playercount
-
 local AllIDs = {}
 local foundAnything = ""
 local actualHour = os.date("!*t").hour
@@ -22,58 +21,53 @@ if not File then
 end
 
 local function TPReturner(placeId, teleportSetting)
-    local Site
+    local Site;
     if foundAnything == "" then
         Site = S_H:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. placeId .. '/servers/Public?sortOrder=Asc&limit=100'))
     else
         Site = S_H:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. placeId .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. foundAnything))
     end
-    
+    local ID = ""
     local bestServer = nil
-    local minPlayers = math.huge
-    
-    for _, server in pairs(Site.data) do
-        local id = tostring(server.id)
-        local playing = #server.playerTokens
-        local maxPlayers = tonumber(server.maxPlayers)
-        if playing < maxPlayers and id ~= CurrentID then
-            local visited = false
-            for _, existingID in pairs(AllIDs) do
-                if id == tostring(existingID) then
-                    visited = true
+    local bestPlayerCount = math.huge
+    local bestPing = math.huge
+    if Site.nextPageCursor and Site.nextPageCursor ~= "null" and Site.nextPageCursor ~= nil then
+        foundAnything = Site.nextPageCursor
+    end
+    for _, v in pairs(Site.data) do
+        local Possible = true
+        ID = tostring(v.id)
+        if tonumber(v.maxPlayers) > #v.playerTokens and ID ~= CurrentID then
+            for _, Existing in pairs(AllIDs) do
+                if ID == tostring(Existing) then
+                    Possible = false
                     break
                 end
             end
-            
-            if not visited and playing < minPlayers then
-                bestServer = server
-                minPlayers = playing
-				print(playing)
+            if Possible == true then
+                local ping = v.ping
+                if #v.playerTokens < bestPlayerCount or (#v.playerTokens == bestPlayerCount and ping < bestPing) then
+                    bestServer = v.id
+                    bestPlayerCount = #v.playerTokens
+                    bestPing = ping
+					print(bestPing)
+                end
             end
         end
     end
-    
     if bestServer then
-        local id = tostring(bestServer.id)
-        table.insert(AllIDs, id)
-        
+        table.insert(AllIDs, bestServer)
+        task.wait()
         pcall(function()
             writefile("server-hop-temp.json", S_H:JSONEncode(AllIDs))
+            task.wait()
+            if teleportSetting then
+                S_T:TeleportToPlaceInstance(placeId, bestServer, game.Players.LocalPlayer, "", teleportSetting)
+            else
+                S_T:TeleportToPlaceInstance(placeId, bestServer, game.Players.LocalPlayer)
+            end
         end)
-        
-        task.wait()
-        
-        if teleportSetting then
-            S_T:TeleportToPlaceInstance(placeId, id, game.Players.LocalPlayer, "", teleportSetting)
-        else
-            S_T:TeleportToPlaceInstance(placeId, id, game.Players.LocalPlayer)
-        end
-        
-        task.wait()
-    end
-    
-    if Site.nextPageCursor and Site.nextPageCursor ~= "null" and Site.nextPageCursor ~= nil then
-        foundAnything = Site.nextPageCursor
+        task.wait(4)
     end
 end
 
