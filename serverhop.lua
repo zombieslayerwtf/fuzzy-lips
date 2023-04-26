@@ -1,6 +1,6 @@
 --edited from this: https://github.com/AlternateYT/Roblox-Scripts/blob/main/Serverhop%20Module.lua
 --chatgpt is the pog
---makes it so it actively searches for lowest playercount
+--makes it so it actively searches for lowest playercount and the lowest ping
 local AllIDs = {}
 local foundAnything = ""
 local actualHour = os.date("!*t").hour
@@ -51,12 +51,12 @@ local function TPReturner(placeId, teleportSetting)
                     bestServer = v.id
                     bestPlayerCount = plrs
                     bestPing = ping
+			print(plrs.." plrs: "..bestPing.."ms")
                 end
             end
         end
     end
     if bestServer then
-	print(plrs.." plrs: "..bestPing.."ms")
         table.insert(AllIDs, bestServer)
         task.wait()
         pcall(function()
