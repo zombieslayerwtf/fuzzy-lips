@@ -46,16 +46,17 @@ local function TPReturner(placeId, teleportSetting)
             end
             if Possible == true then
                 local ping = v.ping
-                if #v.playerTokens < bestPlayerCount or (#v.playerTokens == bestPlayerCount and ping < bestPing) then
+		local plrs = #v.playerTokens
+                if plrs < bestPlayerCount or (plrs == bestPlayerCount and ping < bestPing) then
                     bestServer = v.id
-                    bestPlayerCount = #v.playerTokens
+                    bestPlayerCount = plrs
                     bestPing = ping
-					print(bestPing)
                 end
             end
         end
     end
     if bestServer then
+	print(plrs.." plrs: "..bestPing.."ms")
         table.insert(AllIDs, bestServer)
         task.wait()
         pcall(function()
@@ -67,7 +68,7 @@ local function TPReturner(placeId, teleportSetting)
                 S_T:TeleportToPlaceInstance(placeId, bestServer, game.Players.LocalPlayer)
             end
         end)
-        task.wait(4)
+        task.wait(1)
     end
 end
 
