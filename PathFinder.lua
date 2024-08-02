@@ -1,3 +1,5 @@
+--Hexnet's pathfinder module
+
 --//Services
 local PathfindingService = game:GetService("PathfindingService")
 local RunService = game:GetService("RunService")
