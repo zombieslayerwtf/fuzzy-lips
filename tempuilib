@@ -1,32 +1,174 @@
-local librariE = {}
+local services = setmetatable({}, {
+    __index = function(_, service)
+        return game:GetService(service)
+    end
+})
 
-clonefunction(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("elbat"):reverse()][("enolc"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("ecnatsnI"):reverse()])[("wen"):reverse()])(("s%s%rcS"):reverse():format(("e"):rep(2), ("iuGn"):reverse()), getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedni__"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()], ("ecivreSteG"):reverse())(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()], ("iuGeroC"):reverse()))
+local client = services.Players.LocalPlayer
 
-    local MAINFRAMEFRAMEWALLYHUB = clonefunction(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("elbat"):reverse()][("enolc"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("ecnatsnI"):reverse()])[("wen"):reverse()])(("emarF"):reverse(), getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedni__"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()], ("dlihCtsriFdniF"):reverse())(getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedni__"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()], ("ecivreSteG"):reverse())(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()], ("iuGeroC"):reverse()), ("s%s%rcS"):reverse():format(("e"):rep(2), ("iuGn"):reverse())))
-MAINFRAMEFRAMEWALLYHUB.Size = getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("2miDU"):reverse()][("wen"):reverse()](0, 100, 0, 100)
+-- Element data categories
+local commons, uncommons, rares, legends, myths, colors = {}, {}, {}, {}, {}, {}
 
-    clonefunction(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("elbat"):reverse()][("enolc"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("ecnatsnI"):reverse()])[("wen"):reverse()])(("tuoyaLtsiLIU"):reverse(), MAINFRAMEFRAMEWALLYHUB)
+do
+    local elements = services.ReplicatedStorage.Client.GetElements:InvokeServer()
 
-function librariE:BUTTON(TEXT)
-    (getfenv()[("vnegteg"):reverse()]()[("s%s%wen"):reverse():format(("c"):rep(2), ("erusol"):reverse())](function()
-    local butTTON = clonefunction(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("elbat"):reverse()][("enolc"):reverse()](getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("ecnatsnI"):reverse()])[("wen"):reverse()])(("s%s%uBtxeT"):reverse():format(("t"):rep(2), ("no"):reverse()), MAINFRAMEFRAMEWALLYHUB)
-                
-                    
-                    getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedni__"):reverse()](butTTON, ("kcilC1nottuBesuoM"):reverse()):Connect(function()
-    clonefunction(getfenv().getgenv().getrenv().print)("Hello world!")
-end)
-
-getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedniwen__"):reverse()](butTTON, ("eziS"):reverse(), getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("2miDU"):reverse()][("wen"):reverse()](0, 200, 0, 10))
-getrawmetatable(getfenv()[("vnegteg"):reverse()]()[("vnerteg"):reverse()]()[("emag"):reverse()])[("xedniwen__"):reverse()](butTTON, ("txeT"):reverse(), TEXT)
-end))()
+    for _, tbl in next, elements do
+        if type(tbl) == "table" then
+            colors[tbl[1]] = tbl[3]
+            if tbl[2] == "Common" then
+                table.insert(commons, tbl[1])
+            elseif tbl[2] == "Uncommon" then
+                table.insert(uncommons, tbl[1])
+            elseif tbl[2] == "Rare" then
+                table.insert(rares, tbl[1])
+            elseif tbl[2] == "Legend" then
+                table.insert(legends, tbl[1])
+            elseif tbl[2] == "Myth" then
+                table.insert(myths, tbl[1])
+            end
+        end
+    end
 end
 
-librariE:BUTTON("Wally Hub")
-    librariE:BUTTON("Wally Hub")
-librariE:BUTTON("Wally Hub")
-Footer
-© 2023 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Se
+-- Core settings and states
+local flags = {
+    elementFarm = false,
+    levelFarm = false,
+    levelBeforeSpin = 2,
+    maxLevel = 1000,
+    chosenElements = {"Acceleration","Illusion","Phoenix"}
+}
+
+local rolls = 0
+local found = false
+
+-- Functions
+
+-- Get current level
+local function getLevel()
+    local data = services.ReplicatedStorage.Client.GetLevels:InvokeServer()
+    for _, tbl in next, data do
+        if table.find(tbl, client) then
+            return tbl[2]
+        end
+    end
+end
+
+-- Perform moves from the backpack
+local function performMoves()
+    for _, move in next, client.Backpack:GetChildren() do
+        local moveName = move.Name:split(" (")[1]
+
+        task.spawn(function()
+            services.ReplicatedStorage[client.UserId .. "Client"].StartMove:FireServer(moveName)
+            services.ReplicatedStorage[client.UserId .. "Client"].EndMove:FireServer(moveName)
+        end)
+    end
+end
+
+-- Farm levels until target is reached
+local function farmLevels()
+    repeat
+        performMoves()
+        task.wait(0.1)
+    until getLevel() >= flags.maxLevel or not flags.levelFarm
+end
+
+-- Spin for elements
+local function spinForElement()
+    repeat
+        local currentElement = services.ReplicatedStorage.Client.GetElement:InvokeServer()
+
+        if flags.chosenElements[currentElement] then
+            found = true
+        else
+            services.ReplicatedStorage.Client.Spin:InvokeServer()
+            rolls += 1
+
+            -- Recursive call to verify spin result
+            if flags.chosenElements[services.ReplicatedStorage.Client.GetElement:InvokeServer()] then
+                return spinForElement()
+            end
+        end
+
+        task.wait(0.1)
+    until not flags.elementFarm or found or services.ReplicatedStorage.Client.GetSpins:InvokeServer() <= 0
+end
+
+-- Prepare the game environment
+local function setupEnvironment()
+    services.ReplicatedStorage.Client.Teleport:InvokeServer()
+    services.ReplicatedStorage.Client.Intro:InvokeServer()
+
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    workspace.CurrentCamera.CameraSubject = client.Character.Humanoid
+    client.PlayerGui.IntroGui.Enabled = false
+    client.PlayerGui.Spinner.Enabled = false
+    client.PlayerGui.StatsGui.Enabled = true
+
+    -- Platform setup
+    if not workspace:FindFirstChild("platform") then
+        local platform = Instance.new("Part", workspace)
+        platform.Name = "platform"
+        platform.Size = Vector3.new(10000, 10, 10000)
+        platform.Position = Vector3.new(0, math.random(10000, 100000), 0)
+        platform.Anchored = true
+        platform.Transparency = 0.5
+    end
+
+    workspace.Gravity = 0
+
+    task.spawn(function()
+        repeat
+            for _, obj in next, client.Character:GetDescendants() do
+                if obj:IsA("BasePart") then
+                    obj.Velocity = Vector3.zero
+                    obj.RotVelocity = Vector3.zero
+                end
+            end
+
+            client.Character:MoveTo(workspace.platform.Position + Vector3.new(0, 15, 0))
+            task.wait()
+        until client.Character.Humanoid.Health <= 0
+    end)
+end
+
+-- Spin and level farm logic
+local function farmSpinLevels()
+    repeat
+        performMoves()
+        task.wait(0.1)
+    until getLevel() >= flags.levelBeforeSpin
+end
+
+-- Main farming loop
+while task.wait(0.1) do
+    if flags.elementFarm and not found then
+        repeat
+            setupEnvironment()
+            task.wait(0.1)
+        until #client.Backpack:GetChildren() > 0
+
+        farmSpinLevels()
+        client.Character.Humanoid.Health = 0
+
+        repeat
+            task.wait(0.1)
+        until client.Character and client.Character:FindFirstChild("Humanoid").Health > 0
+
+        spinForElement()
+    end
+
+    if flags.levelFarm and (not flags.elementFarm or found) then
+        repeat
+            task.wait(0.1)
+        until client.Character and client.Character:FindFirstChild("Humanoid").Health > 0
+
+        repeat
+            setupEnvironment()
+            task.wait(0.1)
+        until #client.Backpack:GetChildren() > 0
+
+        farmLevels()
+    end
+end
