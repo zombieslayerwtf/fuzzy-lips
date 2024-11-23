@@ -1,0 +1,138 @@
+local Library = {}
+
+-- Create the main UI window
+function Library:Load(config)
+    local ui = {}
+    ui.tabs = {}
+    ui.flags = {}
+
+    -- Create the UI ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = config.Name
+    screenGui.Parent = game.CoreGui
+
+    -- Create the main frame
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, config.SizeX, 0, config.SizeY)
+    mainFrame.Position = UDim2.new(0.5, -config.SizeX / 2, 0.5, -config.SizeY / 2)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+
+    -- Add a title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 25)
+    title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    title.BorderSizePixel = 0
+    title.Text = config.Name
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 16
+    title.Parent = mainFrame
+
+    -- Tab container
+    local tabHolder = Instance.new("Frame")
+    tabHolder.Size = UDim2.new(1, 0, 0, 30)
+    tabHolder.Position = UDim2.new(0, 0, 0, 25)
+    tabHolder.BackgroundTransparency = 1
+    tabHolder.Parent = mainFrame
+
+    -- Page container
+    local pageHolder = Instance.new("Frame")
+    pageHolder.Size = UDim2.new(1, 0, 1, -55)
+    pageHolder.Position = UDim2.new(0, 0, 0, 55)
+    pageHolder.BackgroundTransparency = 1
+    pageHolder.Parent = mainFrame
+
+    -- Create a tab
+    function ui:Tab(tabName)
+        local tab = {}
+        local tabButton = Instance.new("TextButton")
+        tabButton.Text = tabName
+        tabButton.Size = UDim2.new(0, 80, 1, 0)
+        tabButton.Position = UDim2.new(#ui.tabs * 0.2, 0, 0, 0)
+        tabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        tabButton.BorderSizePixel = 0
+        tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tabButton.Font = Enum.Font.SourceSansBold
+        tabButton.TextSize = 14
+        tabButton.Parent = tabHolder
+
+        -- Page for the tab
+        local tabPage = Instance.new("Frame")
+        tabPage.Size = UDim2.new(1, 0, 1, 0)
+        tabPage.BackgroundTransparency = 1
+        tabPage.Visible = #ui.tabs == 0
+        tabPage.Parent = pageHolder
+
+        tab.sections = {}
+        tab.page = tabPage
+
+        -- Show page when button is clicked
+        tabButton.MouseButton1Click:Connect(function()
+            for _, t in pairs(ui.tabs) do
+                t.page.Visible = false
+            end
+            tabPage.Visible = true
+        end)
+
+        -- Create a section
+        function tab:Section(config)
+            local section = {}
+            local sectionFrame = Instance.new("Frame")
+            sectionFrame.Size = UDim2.new(1, -10, 0, 100)
+            sectionFrame.Position = UDim2.new(0, 5, 0, (#tab.sections) * 105)
+            sectionFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+            sectionFrame.BorderSizePixel = 0
+            sectionFrame.Parent = tabPage
+
+            -- Add a label
+            local sectionTitle = Instance.new("TextLabel")
+            sectionTitle.Size = UDim2.new(1, 0, 0, 20)
+            sectionTitle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            sectionTitle.Text = config.Name
+            sectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sectionTitle.Font = Enum.Font.SourceSansBold
+            sectionTitle.TextSize = 14
+            sectionTitle.Parent = sectionFrame
+
+            -- Store elements
+            section.elements = {}
+
+            -- Add toggle
+            function section:Toggle(config)
+                local toggle = Instance.new("TextButton")
+                toggle.Size = UDim2.new(1, -10, 0, 20)
+                toggle.Position = UDim2.new(0, 5, 0, 25 + #section.elements * 25)
+                toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+                toggle.Text = config.Name
+                toggle.Font = Enum.Font.SourceSans
+                toggle.TextSize = 14
+                toggle.Parent = sectionFrame
+
+                local enabled = false
+                toggle.MouseButton1Click:Connect(function()
+                    enabled = not enabled
+                    toggle.BackgroundColor3 = enabled and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(50, 50, 50)
+                    if config.Callback then
+                        config.Callback(enabled)
+                    end
+                end)
+                table.insert(section.elements, toggle)
+            end
+
+            -- Add other elements similarly...
+            table.insert(tab.sections, section)
+            return section
+        end
+
+        table.insert(ui.tabs, tab)
+        return tab
+    end
+
+    return ui
+end
+
+return Library
